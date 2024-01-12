@@ -34,39 +34,30 @@ namespace ZUI
             int i = 0;
             foreach (UrlDir.UrlConfig config in transforms)
             {
-                if (!config.config.HasValue("target")) {
+                if (!config.config.HasValue("target"))
+                {
                     Debug.Log("[ZUI] Node does not have a transform target!");
                     continue;
                 }
                 string target = config.config.GetValue("target");
                 float[] translate = new float[3];
                 GameObject gameObject = GameObject.Find(target);
-                if (gameObject != null) {
+
+                // Some GameObjects return null even tho they exist. Calling the Start() function again fixes this.
+                if (gameObject != null)
+                {
                     transformObjects[i] = gameObject;
 
                     if (config.config.HasValue("relative"))
                     {
                         relativeTransform[i] = config.config.GetValue("relative");
                     }
-                    if (config.config.HasValue("translate_x"))
-                    {
-                        translate[0] = Convert.ToSingle(config.config.GetValue("translate_x"));
-                    }
-                    if (config.config.HasValue("translate_y"))
-                    {
-                        translate[1] = Convert.ToSingle(config.config.GetValue("translate_y"));
-                    }
-                    if (config.config.HasValue("translate_z"))
-                    {
-                        translate[2] = Convert.ToSingle(config.config.GetValue("translate_z"));
-                    }
-                    if (config.config.HasValue("rotate"))
-                    {
-                        rotateAmounts[i] = new Vector3(0f, 0f, Convert.ToSingle(config.config.GetValue("rotate")));
-                    } else
-                    {
-                        rotateAmounts[i] = new Vector3(0f, 0f, 0f);
-                    }
+                    translate[0] = config.config.HasValue("translate_x") ? Convert.ToSingle(config.config.GetValue("translate_x")) : 0f;
+                    translate[1] = config.config.HasValue("translate_y") ? Convert.ToSingle(config.config.GetValue("translate_y")) : 0f;
+                    translate[2] = config.config.HasValue("translate_z") ? Convert.ToSingle(config.config.GetValue("translate_z")) : 0f;
+                    rotateAmounts[i] = config.config.HasValue("rotate")
+                        ? new Vector3(0f, 0f, Convert.ToSingle(config.config.GetValue("rotate")))
+                        : new Vector3(0f, 0f, 0f);
                     translateAmounts[i] = new Vector3(translate[0], translate[1], translate[2]);
                     Debug.Log("[ZUI] target: " + gameObject.ToString() + ", translateAmounts: " + translateAmounts[i] + ", rotateAmounts: " + rotateAmounts[i]);
                 } else
@@ -85,7 +76,7 @@ namespace ZUI
             {
                 if (gameObject != null)
                 {
-                    switch(relativeTransform[i])
+                    switch (relativeTransform[i])
                     {
                         case "yes":
                         case "YES":
@@ -128,6 +119,10 @@ namespace ZUI
                             Debug.Log("[ZUI] Name: " + gameObject.name + " | Translate: " + gameObject.transform.localPosition.ToString() + " | Rotate: " + gameObject.transform.localPosition.ToString());
                         }
                     }
+                }
+                if (Input.GetKeyUp(KeyCode.Q))
+                {
+                    Start(); // Unfortunately the configs don't get reloaded so all this does is nudge the textures more
                 }
             }
         }
