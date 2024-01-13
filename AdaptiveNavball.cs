@@ -40,6 +40,7 @@ namespace ZUI
                 {
                     navballTexture = tex;
                     Debug.Log("[ZUI] Found NavBall texture!");
+                    break;
                 }
             }
             Debug.Log("[ZUI] navballExists: Surface: " + navballExists[0] + ", Orbit: " + navballExists[1] + ", Target: " + navballExists[2]);
