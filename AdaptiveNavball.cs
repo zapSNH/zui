@@ -10,6 +10,7 @@ namespace ZUI
         internal UrlDir.UrlConfig[] navballConfigs;
         private string[] navballPaths = new string[3];
         private bool[] navballExists = new bool[3];
+        private Texture2D navballTexture;
 
         public void Start()
         {
@@ -33,6 +34,14 @@ namespace ZUI
                     navballExists[2] = true;
                 }
             }
+            foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D)))
+            {
+                if (tex.name == "NavBall")
+                {
+                    navballTexture = tex;
+                    Debug.Log("[ZUI] Found NavBall texture!");
+                }
+            }
             Debug.Log("[ZUI] navballExists: Surface: " + navballExists[0] + ", Orbit: " + navballExists[1] + ", Target: " + navballExists[2]);
             Debug.Log("[ZUI] navballPaths: Surface: " + navballPaths[0] + ", Orbit: " + navballPaths[1] + ", Target:" + navballPaths[2]);
             ChangeNavball(new FlightGlobals.SpeedDisplayModes());
@@ -41,33 +50,27 @@ namespace ZUI
 
         internal void ChangeNavball(FlightGlobals.SpeedDisplayModes speedMode)
         {
-            foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D)))
+            Debug.Log("[ZUI] Switching Navball mode to " + FlightGlobals.speedDisplayMode);
+            switch (FlightGlobals.speedDisplayMode.ToString())
             {
-                if (tex.name == "NavBall")
-                {
-                    Debug.Log("[ZUI] Switching Navball mode to " + FlightGlobals.speedDisplayMode);
-                    switch (FlightGlobals.speedDisplayMode.ToString())
+                case "Surface":
+                    if (navballExists[0])
                     {
-                        case "Surface":
-                            if (navballExists[0])
-                            {
-                                ImageConversion.LoadImage(tex, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[0]));
-                            }
-                            break;
-                        case "Orbit":
-                            if (navballExists[1])
-                            {
-                                ImageConversion.LoadImage(tex, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[1]));
-                            }
-                            break;
-                        case "Target":
-                            if (navballExists[2])
-                            {
-                                ImageConversion.LoadImage(tex, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[2]));
-                            }
-                            break;
+                        ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[0]));
                     }
-                }
+                    break;
+                case "Orbit":
+                    if (navballExists[1])
+                    {
+                        ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[1]));
+                    }
+                    break;
+                case "Target":
+                    if (navballExists[2])
+                    {
+                        ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[2]));
+                    }
+                    break;
             }
         }
 

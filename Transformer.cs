@@ -120,10 +120,10 @@ namespace ZUI
                         }
                     }
                 }
-                if (Input.GetKeyUp(KeyCode.Q))
-                {
-                    Start(); // Unfortunately the configs don't get reloaded so all this does is nudge the textures more
-                }
+                //if (Input.GetKeyUp(KeyCode.Q))
+                //{
+                //    Start(); // Unfortunately the configs don't get reloaded so all this does is nudge the textures more
+                //}
             }
         }
     }
