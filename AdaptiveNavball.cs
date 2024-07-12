@@ -52,21 +52,21 @@ namespace ZUI
 		internal void ChangeNavball(FlightGlobals.SpeedDisplayModes speedMode)
 		{
 			Debug.Log("[ZUI] Switching Navball mode to " + FlightGlobals.speedDisplayMode);
-			switch (FlightGlobals.speedDisplayMode.ToString())
+			switch (FlightGlobals.speedDisplayMode)
 			{
-				case "Surface":
+				case FlightGlobals.SpeedDisplayModes.Surface:
 					if (navballExists[0])
 					{
 						ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[0]));
 					}
 					break;
-				case "Orbit":
+				case FlightGlobals.SpeedDisplayModes.Orbit:
 					if (navballExists[1])
 					{
 						ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[1]));
 					}
 					break;
-				case "Target":
+				case FlightGlobals.SpeedDisplayModes.Target:
 					if (navballExists[2])
 					{
 						ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + navballPaths[2]));
