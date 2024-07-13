@@ -1,25 +1,21 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
 using UnityEngine;
-using Smooth.Pools;
 
 // Partially based on wheeeUI and Visual Studio's autocomplete feature
-namespace ZUI
-{
+namespace ZUI {
 	[KSPAddon(KSPAddon.Startup.EveryScene, false)]
-	public class Transformer : MonoBehaviour
-	{
+	public class Transformer : MonoBehaviour {
 		internal static Transformer instance;
 		internal UrlDir.UrlConfig[] transforms;
 		internal List<GameObject> transformObjects = new List<GameObject>();
 		internal List<bool> relativeTransform = new List<bool>();
 		public List<Vector3> translateAmounts = new List<Vector3>();
 		public List<Vector3> rotateAmounts = new List<Vector3>(); // rotation will always non-relative
-		//public List<Vector3> scaleAmounts = new List<Vector3>(); // merely adding the code to handle scale without doing anything in the cfg files seems to break the rotation code
+																  //public List<Vector3> scaleAmounts = new List<Vector3>(); // merely adding the code to handle scale without doing anything in the cfg files seems to break the rotation code
 
-		private const string ZUITRANSFORM_CFG = "ZUITransform";
-		private const string ZUISETTINGS_CFG = "ZUISettings";
+		private const string ZUITRANSFORM_NODE = "ZUITransform";
+		private const string ZUISETTINGS_NODE = "ZUISettings";
 
 		private const string TARGET_TRANSFORM_CFG = "target";
 		private const string RELATIVE_TRANSFORM_CFG = "relative";
@@ -33,36 +29,46 @@ namespace ZUI
 
 		private bool debugMode = false;
 
-		public void Start()
-		{
+		public void Start() {
 			if (instance == null) {
 				instance = this;
 			} else {
 				Destroy(gameObject);
 				return;
 			}
-			transforms = GameDatabase.Instance.GetConfigs(ZUITRANSFORM_CFG);
+			GetTransform();
+			SetTransform();
 
-			foreach (UrlDir.UrlConfig config in transforms)
-			{
-				if (!config.config.HasValue(TARGET_TRANSFORM_CFG))
-				{
+			UrlDir.UrlConfig[] ZUISettings = GameDatabase.Instance.GetConfigs(ZUISETTINGS_NODE);
+			foreach (UrlDir.UrlConfig config in ZUISettings) {
+				config.config.TryGetValue(DEBUG_CFG, ref debugMode);
+			}
+		}
+		internal void GetTransform() {
+			transforms = GameDatabase.Instance.GetConfigs(ZUITRANSFORM_NODE);
+
+			foreach (UrlDir.UrlConfig config in transforms) {
+
+				if (!config.config.HasValue(TARGET_TRANSFORM_CFG)) {
 					Debug.Log("[ZUI] Node does not have a transform target!");
 					continue;
 				}
+
 				string target = config.config.GetValue(TARGET_TRANSFORM_CFG);
 				bool isMulti = false;
+
 				if (config.config.HasValue(MULTI_OBJECT_TRANSFORM_CFG)) {
 					bool.TryParse(config.config.GetValue(MULTI_OBJECT_TRANSFORM_CFG), out isMulti);
 				}
+
 				List<GameObject> gameObjects = new List<GameObject>();
+
 				if (isMulti) {
 					gameObjects = Resources.FindObjectsOfTypeAll<GameObject>().Where(obj => obj.name == target) as List<GameObject>;
 				} else {
 					gameObjects.Add(GameObject.Find(target));
 				}
 
-				// Some GameObjects return null even tho they exist. Calling the Start() function again fixes this.
 				foreach (var gameObject in gameObjects) {
 					if (gameObject != null) {
 						Vector3 translate = Vector3.negativeInfinity;
@@ -88,22 +94,18 @@ namespace ZUI
 						translateAmounts.Add(translate);
 						relativeTransform.Add(isRelative);
 						//scaleAmounts.Add(scale);
-						Debug.Log($"[ZUI] target: {gameObject.name} | translate: {translate} | rotate: {rotate} | scale: ");
+						Debug.Log($"[ZUI] target: {gameObject.name} | translate: {translate} | rotate: {rotate}" /* | scale: {scale}"*/);
 					} else {
 						Debug.Log($"[ZUI] Invalid transform target! ({target})");
 						continue;
 					}
 				}
 			}
-
-			// This could probably be merged with the loop above but just in
-			// case I find a gameObject that can only be moved in Update() or
-			// something then it would be very easy to move this loop there.
+		}
+		internal void SetTransform() {
 			int i = 0;
-			foreach (GameObject gameObject in transformObjects)
-			{
-				if (gameObject != null)
-				{
+			foreach (GameObject gameObject in transformObjects) {
+				if (gameObject != null) {
 					if (relativeTransform[i]) {
 						if (translateAmounts[i] != Vector3.negativeInfinity)
 							gameObject.transform.localPosition += translateAmounts[i];
@@ -119,25 +121,14 @@ namespace ZUI
 				}
 				i++;
 			}
-
-			UrlDir.UrlConfig[] ZUISettings = GameDatabase.Instance.GetConfigs(ZUISETTINGS_CFG);
-			foreach (UrlDir.UrlConfig config in ZUISettings)
-			{
-				config.config.TryGetValue(DEBUG_CFG, ref debugMode);
-			}
 		}
-		public void Update()
-		{
-			if (debugMode)
-			{
+		public void Update() {
+			if (debugMode) {
 				// use debugstuff instead of this
-				if (Input.GetKeyUp(KeyCode.E))
-				{
+				if (Input.GetKeyUp(KeyCode.E)) {
 					GameObject[] gameObjects = FindObjectsOfType<GameObject>();
-					foreach (GameObject gameObject in gameObjects)
-					{
-						if (gameObject != null)
-						{
+					foreach (GameObject gameObject in gameObjects) {
+						if (gameObject != null) {
 							Debug.Log($"[ZUI] Name: " + gameObject.name + " | Translate: " + gameObject.transform.localPosition.ToString() + " | Rotate: " + gameObject.transform.localPosition.ToString());
 						}
 					}
