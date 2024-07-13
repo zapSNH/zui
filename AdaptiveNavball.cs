@@ -12,31 +12,37 @@ namespace ZUI
 		private bool[] navballExists = new bool[3];
 		private Texture2D navballTexture;
 
+		private const string ZUINAVBALL_CFG = "ZUINavBall";
+		private const string NAVBALL_SURFACE = "navball_surface";
+		private const string NAVBALL_ORBIT = "navball_orbit";
+		private const string NAVBALL_TARGET = "navball_target";
+		private const string NAVBALL_TEXTURE = "NavBall";
+
 		public void Start()
 		{
 			instance = this;
-			navballConfigs = GameDatabase.Instance.GetConfigs("ZUINavBall");
+			navballConfigs = GameDatabase.Instance.GetConfigs(ZUINAVBALL_CFG);
 			foreach (UrlDir.UrlConfig config in navballConfigs)
 			{
-				if (config.config.HasValue("navball_surface"))
+				if (config.config.HasValue(NAVBALL_SURFACE))
 				{
-					navballPaths[0] = config.config.GetValue("navball_surface");
+					navballPaths[0] = config.config.GetValue(NAVBALL_SURFACE);
 					navballExists[0] = true;
 				}
-				if (config.config.HasValue("navball_orbit"))
+				if (config.config.HasValue(NAVBALL_ORBIT))
 				{
-					navballPaths[1] = config.config.GetValue("navball_orbit");
+					navballPaths[1] = config.config.GetValue(NAVBALL_ORBIT);
 					navballExists[1] = true;
 				}
-				if (config.config.HasValue("navball_target"))
+				if (config.config.HasValue(NAVBALL_TARGET))
 				{
-					navballPaths[2] = config.config.GetValue("navball_target");
+					navballPaths[2] = config.config.GetValue(NAVBALL_TARGET);
 					navballExists[2] = true;
 				}
 			}
 			foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D)))
 			{
-				if (tex.name == "NavBall")
+				if (tex.name == NAVBALL_TEXTURE)
 				{
 					navballTexture = tex;
 					Debug.Log("[ZUI] Found NavBall texture!");
