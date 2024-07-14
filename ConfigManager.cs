@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ZUI
-{
+namespace ZUI {
+	// todo: make ddol and test
 	[KSPAddon(KSPAddon.Startup.EveryScene, false)]
-	public class ConfigManager : MonoBehaviour
-	{
+	public class ConfigManager : MonoBehaviour {
 		internal static ConfigManager instance;
 
-		private List<Config> currentConfigs = new List<Config>();
-		private List<ConfigNode> currentConfigNodes = new List<ConfigNode>();
+		private static List<Config> currentConfigs = new List<Config>();
+		private static List<Config> enabledConfigs = new List<Config>();
+		private static List<ConfigNode> currentConfigNodes = new List<ConfigNode>();
 
 		private const string OPTIONS_SAVE_LOCATION = "GameData/999_ZUI/Config/options.cfg";
 
@@ -21,14 +21,13 @@ namespace ZUI
 		private const string ZUICONFIGOPTIONS_NODE = "ZUIConfigOptions";
 		private const string ZUICONFIGOPTIONENABLED_CFG = "enabled";
 
-		private const string HUDREPLACER_NODE = "HUDReplacer:NEEDS[HUDReplacer]";
-		private const string HUDREPLACER_RECOLOR_NODE = "HUDReplacerRecolor:NEEDS[HUDReplacer]";
-		private const string HUDREPLACER_PATH_CFG = "filePath";
-		private const string HUDREPLACER_PRIORITY_CFG = "priority";
-
-		public void Awake()
-		{
-			instance = this;
+		public void Awake() {
+			if (instance == null) {
+				instance = this;
+			} else {
+				Destroy(gameObject);
+				return;
+			}
 
 			LoadConfigs();
 			SetConfigs();
@@ -62,7 +61,7 @@ namespace ZUI
 					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(ZUICONFIGOPTIONENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 					foreach (string configValue in ZUIConfigOptionValues) {
 						if (currentConfigs.Exists(c => c.name == configValue)) {
-							LoadConfig(currentConfigs.Find(c => c.name == configValue));
+							EnableConfig(currentConfigs.Find(c => c.name == configValue));
 						} else {
 							Debug.Log($"[ZUI] '{configValue}' does not exist.");
 						}
@@ -70,27 +69,44 @@ namespace ZUI
 				}
 			}
 		}
-		private void LoadConfig(Config config) {
-			if (config.hudReplacerLoad != null) {
-				ConfigNode configNode = new ConfigNode(HUDREPLACER_NODE);
-				int priority = 1;
-				int.TryParse(config.hudReplacerLoadPriority, out priority);
-				configNode.AddValue(HUDREPLACER_PATH_CFG, config.hudReplacerLoad);
-				configNode.AddValue(HUDREPLACER_PRIORITY_CFG, priority);
-				currentConfigNodes.Add(configNode);
-			}
-			// TODO: finish up recoloring
-			if (config.HasRecolorNode) {
-				ConfigNode configNode = new ConfigNode(HUDREPLACER_RECOLOR_NODE);
+		internal static void EnableConfig(Config config) {
+			if (!enabledConfigs.Contains(config)) {
+				enabledConfigs.Add(config);
 			}
 		}
-		private void SetConfigs() {
+		internal static bool DisableConfig(Config config) {
+			return enabledConfigs.Remove(config);
+		}
+		private static void AddConfig(Config config) {
+			if (config.HasHUDReplacerNode) {
+				ConfigNode[] ConfigNodes = config.GetConfigNodesAsHUDReplacerNodes();
+				foreach (var configNode in ConfigNodes) {
+					currentConfigNodes.Add(configNode);
+				}
+			}
+			if (config.HasRecolorNode) {
+				ConfigNode[] recolorConfigNodes = config.GetRecolorConfigNodesAsHUDReplacerRecolorNodes();
+				foreach (var configNode in recolorConfigNodes) {
+					currentConfigNodes.Add(configNode);
+				}
+			}
+		}
+		internal static void SetConfigs() {
+			foreach (Config config in enabledConfigs) { 
+				AddConfig(config);
+			}
 			ConfigNode optionsFile = new ConfigNode();
 			foreach (ConfigNode configNode in currentConfigNodes) {
 				optionsFile.AddNode(configNode);
 			}
 			optionsFile.Save(KSPUtil.ApplicationRootPath + OPTIONS_SAVE_LOCATION, "ZUI Options. Any changes to this file may be overwritten by ZUI, use config.cfg instead.");
 			GameDatabase.CompileConfig(optionsFile);
+		}
+		internal static List<Config> GetConfigs() {
+			return currentConfigs;
+		}
+		internal static List<Config> GetEnabledConfigs() {
+			return enabledConfigs;
 		}
 	}
 }

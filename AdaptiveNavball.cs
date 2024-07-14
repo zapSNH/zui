@@ -6,19 +6,22 @@ namespace ZUI {
 	public class AdaptiveNavball : MonoBehaviour {
 		internal static AdaptiveNavball instance;
 		internal UrlDir.UrlConfig[] navballConfigs;
-		private string[] navballPaths = new string[3];
+		private string[] navballPaths = new string[] { null, null, null };
 		private bool[] navballExists = new bool[3];
 		private Texture2D navballTexture;
+		private bool enableAdaptiveNavball = true;
 
 		private const string ZUINAVBALL_NODE = "ZUINavBall";
-		private const string NAVBALL_SURFACE = "navball_surface";
-		private const string NAVBALL_ORBIT = "navball_orbit";
-		private const string NAVBALL_TARGET = "navball_target";
+		private const string ADAPTIVE_NAVBALL_ENABLED_CFG = "enabled";
+		private const string NAVBALL_SURFACE = "navballSurface";
+		private const string NAVBALL_ORBIT = "navballOrbit";
+		private const string NAVBALL_TARGET = "navballTarget";
 		private const string NAVBALL_TEXTURE = "NavBall";
 
 		public void Start() {
 			instance = this;
 			LoadConfigs();
+			if (!enableAdaptiveNavball) return;
 			foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D))) {
 				if (tex.name == NAVBALL_TEXTURE) {
 					navballTexture = tex;
@@ -27,7 +30,7 @@ namespace ZUI {
 				}
 			}
 
-			Debug.Log("[ZUI] NavBall Texture Paths: Surface: " + navballPaths[0] ?? "None" + " | Orbit: " + navballPaths[1] ?? "None" + " | Target:" + navballPaths[2] ?? "None");
+			Debug.Log("[ZUI] NavBall Texture Paths: Surface: " + (navballPaths[0] ?? "None") + " | Orbit: " + (navballPaths[1] ?? "None") + " | Target:" + (navballPaths[2] ?? "None"));
 			ChangeNavball(new FlightGlobals.SpeedDisplayModes());
 			GameEvents.onSetSpeedMode.Add(ChangeNavball);
 		}
@@ -35,6 +38,7 @@ namespace ZUI {
 			navballConfigs = GameDatabase.Instance.GetConfigs(ZUINAVBALL_NODE);
 			foreach (UrlDir.UrlConfig config in navballConfigs) {
 				if (config.config.HasValue(NAVBALL_SURFACE)) {
+					Debug.Log("[ZUI] " + config.config.GetValue(NAVBALL_SURFACE));
 					navballPaths[0] = config.config.GetValue(NAVBALL_SURFACE);
 					navballExists[0] = true;
 				}
@@ -45,6 +49,9 @@ namespace ZUI {
 				if (config.config.HasValue(NAVBALL_TARGET)) {
 					navballPaths[2] = config.config.GetValue(NAVBALL_TARGET);
 					navballExists[2] = true;
+				}
+				if (config.config.HasValue(ADAPTIVE_NAVBALL_ENABLED_CFG)) {
+					config.config.TryGetValue(ADAPTIVE_NAVBALL_ENABLED_CFG, ref enableAdaptiveNavball);
 				}
 			}
 		}

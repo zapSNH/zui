@@ -12,7 +12,7 @@ namespace ZUI {
 		internal List<bool> relativeTransform = new List<bool>();
 		public List<Vector3> translateAmounts = new List<Vector3>();
 		public List<Vector3> rotateAmounts = new List<Vector3>(); // rotation will always non-relative
-																  //public List<Vector3> scaleAmounts = new List<Vector3>(); // merely adding the code to handle scale without doing anything in the cfg files seems to break the rotation code
+		//public List<Vector3> scaleAmounts = new List<Vector3>(); // merely adding the code to handle scale without doing anything in the cfg files seems to break the rotation code
 
 		private const string ZUITRANSFORM_NODE = "ZUITransform";
 		private const string ZUISETTINGS_NODE = "ZUISettings";
@@ -25,7 +25,7 @@ namespace ZUI {
 		private const string ROTATE_CFG = "rotate";
 		//private const string SCALE_CFG = "scale";
 
-		private const string DEBUG_CFG = "debug_mode";
+		private const string DEBUG_CFG = "debugMode";
 
 		private bool debugMode = false;
 
