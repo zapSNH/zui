@@ -4,26 +4,19 @@ using UnityEngine;
 namespace ZUI {
 	[KSPAddon(KSPAddon.Startup.Flight, false)]
 	public class AdaptiveNavball : MonoBehaviour {
-		internal static AdaptiveNavball instance;
-		internal UrlDir.UrlConfig[] navballConfigs;
+		internal static AdaptiveNavball Instance { get; private set; }
+		internal ConfigNode[] navballConfigs;
 		private string[] navballPaths = new string[] { null, null, null };
 		private bool[] navballExists = new bool[3];
 		private Texture2D navballTexture;
 		private bool enableAdaptiveNavball = true;
 
-		private const string ZUINAVBALL_NODE = "ZUINavBall";
-		private const string ADAPTIVE_NAVBALL_ENABLED_CFG = "enabled";
-		private const string NAVBALL_SURFACE = "navballSurface";
-		private const string NAVBALL_ORBIT = "navballOrbit";
-		private const string NAVBALL_TARGET = "navballTarget";
-		private const string NAVBALL_TEXTURE = "NavBall";
-
 		public void Start() {
-			instance = this;
+			Instance = this;
 			LoadConfigs();
 			if (!enableAdaptiveNavball) return;
 			foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D))) {
-				if (tex.name == NAVBALL_TEXTURE) {
+				if (tex.name == Constants.NAVBALL_TEXTURE) {
 					navballTexture = tex;
 					Debug.Log("[ZUI] Found NavBall texture!");
 					break;
@@ -35,23 +28,26 @@ namespace ZUI {
 			GameEvents.onSetSpeedMode.Add(ChangeNavball);
 		}
 		private void LoadConfigs() {
-			navballConfigs = GameDatabase.Instance.GetConfigs(ZUINAVBALL_NODE);
-			foreach (UrlDir.UrlConfig config in navballConfigs) {
-				if (config.config.HasValue(NAVBALL_SURFACE)) {
-					Debug.Log("[ZUI] " + config.config.GetValue(NAVBALL_SURFACE));
-					navballPaths[0] = config.config.GetValue(NAVBALL_SURFACE);
-					navballExists[0] = true;
-				}
-				if (config.config.HasValue(NAVBALL_ORBIT)) {
-					navballPaths[1] = config.config.GetValue(NAVBALL_ORBIT);
-					navballExists[1] = true;
-				}
-				if (config.config.HasValue(NAVBALL_TARGET)) {
-					navballPaths[2] = config.config.GetValue(NAVBALL_TARGET);
-					navballExists[2] = true;
-				}
-				if (config.config.HasValue(ADAPTIVE_NAVBALL_ENABLED_CFG)) {
-					config.config.TryGetValue(ADAPTIVE_NAVBALL_ENABLED_CFG, ref enableAdaptiveNavball);
+			UrlDir.UrlConfig[] ZUINodes = GameDatabase.Instance.GetConfigs(Constants.ZUI_NODE);
+			foreach (UrlDir.UrlConfig node in ZUINodes) {
+				navballConfigs = node.config.GetNodes(Constants.ZUINAVBALL_NODE);
+				foreach (ConfigNode config in navballConfigs) {
+					if (config.HasValue(Constants.NAVBALL_SURFACE)) {
+						Debug.Log("[ZUI] " + config.GetValue(Constants.NAVBALL_SURFACE));
+						navballPaths[0] = config.GetValue(Constants.NAVBALL_SURFACE);
+						navballExists[0] = true;
+					}
+					if (config.HasValue(Constants.NAVBALL_ORBIT)) {
+						navballPaths[1] = config.GetValue(Constants.NAVBALL_ORBIT);
+						navballExists[1] = true;
+					}
+					if (config.HasValue(Constants.NAVBALL_TARGET)) {
+						navballPaths[2] = config.GetValue(Constants.NAVBALL_TARGET);
+						navballExists[2] = true;
+					}
+					if (config.HasValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG)) {
+						config.TryGetValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG, ref enableAdaptiveNavball);
+					}
 				}
 			}
 		}

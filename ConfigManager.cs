@@ -3,27 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ZUI {
-	// todo: make ddol and test
 	[KSPAddon(KSPAddon.Startup.EveryScene, false)]
 	public class ConfigManager : MonoBehaviour {
-		internal static ConfigManager instance;
+		internal static ConfigManager Instance { get; private set; }
 
-		private static List<Config> currentConfigs = new List<Config>();
-		private static List<Config> enabledConfigs = new List<Config>();
-		private static List<ConfigNode> currentConfigNodes = new List<ConfigNode>();
+		private static List<Config> currentConfigs = new List<Config>(); // all 'ZUIConfig' configs
+		private static List<Config> enabledConfigs = new List<Config>(); // enabled configs specified in 'ZUIConfigOptions'
+		private static List<ConfigNode> currentConfigNodes = new List<ConfigNode>(); // resulting config nodes from enabledConfigs
 
-		private const string OPTIONS_SAVE_LOCATION = "GameData/999_ZUI/Config/options.cfg";
-
-		private const string ZUI_NODE = "ZUI";
-
-		private const string ZUICONFIG_NODE = "ZUIConfig";
-		private const string ZUICONFIGNAME_VALUE = "name";
-		private const string ZUICONFIGOPTIONS_NODE = "ZUIConfigOptions";
-		private const string ZUICONFIGOPTIONENABLED_CFG = "enabled";
+		private const string OPTIONS_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/options.cfg"; // output of currentConfigNodes
+		private const string USER_OVERRIDE_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/override.cfg"; // user overrides set in ui
 
 		public void Awake() {
-			if (instance == null) {
-				instance = this;
+			if (Instance == null || Instance == this) {
+				Instance = this;
+				DontDestroyOnLoad(gameObject);
 			} else {
 				Destroy(gameObject);
 				return;
@@ -33,13 +27,14 @@ namespace ZUI {
 			SetConfigs();
 		}
 		private void LoadConfigs() {
-			UrlDir.UrlConfig[] ZUINodes = GameDatabase.Instance.GetConfigs(ZUI_NODE);
+			UrlDir.UrlConfig[] ZUINodes = GameDatabase.Instance.GetConfigs(Constants.ZUI_NODE);
 			foreach (UrlDir.UrlConfig URLConfig in ZUINodes) {
 
+				// load all configs
 				Debug.Log($"[ZUI] Loading configs from {URLConfig.url}");
-				ConfigNode[] ZUIConfigs = URLConfig.config.GetNodes(ZUICONFIG_NODE);
+				ConfigNode[] ZUIConfigs = URLConfig.config.GetNodes(Constants.ZUICONFIG_NODE);
 				foreach (ConfigNode ZUIURLConfig in ZUIConfigs) {
-					if (!ZUIURLConfig.HasValue(ZUICONFIGNAME_VALUE)) {
+					if (!ZUIURLConfig.HasValue(Constants.ZUICONFIGNAME_VALUE)) {
 						Debug.Log("[ZUI] Config does not have a name!");
 						continue;
 					}
@@ -52,13 +47,14 @@ namespace ZUI {
 					currentConfigs.Add(config);
 				}
 
-				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(ZUICONFIGOPTIONS_NODE);
+				// load config options (whether or not a config is enabled)
+				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
 				foreach (ConfigNode ZUIConfigOption in ZUIConfigOptions) {
-					if (!ZUIConfigOption.HasValue(ZUICONFIGOPTIONENABLED_CFG)) {
-						Debug.Log($"[ZUI] Config option does not have '{ZUICONFIGOPTIONENABLED_CFG}'. There is nothing to enable.");
+					if (!ZUIConfigOption.HasValue(Constants.ZUICONFIGOPTIONENABLED_CFG)) {
+						Debug.Log($"[ZUI] Config option does not have '{Constants.ZUICONFIGOPTIONENABLED_CFG}'. There is nothing to enable.");
 						continue;
 					}
-					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(ZUICONFIGOPTIONENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTIONENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 					foreach (string configValue in ZUIConfigOptionValues) {
 						if (currentConfigs.Exists(c => c.name == configValue)) {
 							EnableConfig(currentConfigs.Find(c => c.name == configValue));

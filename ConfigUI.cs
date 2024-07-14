@@ -2,17 +2,17 @@
 using UnityEngine;
 
 namespace ZUI {
-	[KSPAddon(KSPAddon.Startup.MainMenu, false)]
 	internal static class ConfigUI {
 		private static float windowWidth = 250;
-		private static float windowHeight = 500;
+		private static float windowHeight = 300;
 		private static float buttonHeight = 24;
 
-		private static int paddingBase = 4;
-		private static int paddingSmall = 1 * paddingBase;
-		private static int paddingRegular = 2 * paddingBase;
-		private static int paddingLarge = 3 * paddingBase;
-		private static int paddingWindow = 4 * paddingBase;
+		private static float paddingBase = 4;
+		private static float paddingXSmall = 0.5f * paddingBase;
+		private static float paddingSmall = 1 * paddingBase;
+		private static float paddingRegular = 2 * paddingBase;
+		private static float paddingLarge = 3 * paddingBase;
+		private static float paddingWindow = 4 * paddingBase;
 
 		internal static void ShowPopup() {
 			// create dialog to attach elements to
@@ -35,7 +35,7 @@ namespace ZUI {
 			DialogGUIScrollList scrollList = new DialogGUIScrollList(Vector2.one,
 				false,
 				true,
-				new DialogGUIVerticalLayout(windowWidth - (2 * paddingWindow), 64, paddingRegular, new RectOffset(paddingRegular, paddingRegular, paddingRegular, paddingRegular), TextAnchor.MiddleLeft, buttons.ToArray()));
+				new DialogGUIVerticalLayout(windowWidth - (2 * paddingWindow) - (2 * paddingXSmall), 64, paddingXSmall, new RectOffset((int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall), TextAnchor.MiddleLeft, buttons.ToArray()));
 
 			PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
 				new MultiOptionDialog("ZUI Config Options",
