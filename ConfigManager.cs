@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ZUI {
@@ -7,12 +8,14 @@ namespace ZUI {
 	public class ConfigManager : MonoBehaviour {
 		internal static ConfigManager Instance { get; private set; }
 
-		private static List<Config> currentConfigs = new List<Config>(); // all 'ZUIConfig' configs
-		private static List<Config> enabledConfigs = new List<Config>(); // enabled configs specified in 'ZUIConfigOptions'
+		private static List<ZUIConfig> currentConfigs = new List<ZUIConfig>(); // all 'ZUIConfig' configs
+		private static List<ZUIConfig> enabledConfigs = new List<ZUIConfig>(); // enabled configs specified in 'ZUIConfigOptions'
 		private static List<ConfigNode> currentConfigNodes = new List<ConfigNode>(); // resulting config nodes from enabledConfigs
 
 		private const string OPTIONS_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/options.cfg"; // output of currentConfigNodes
 		private const string USER_OVERRIDE_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/override.cfg"; // user overrides set in ui
+
+		private static int overridePriority = 16384;
 
 		public void Awake() {
 			if (Instance == null || Instance == this) {
@@ -39,7 +42,7 @@ namespace ZUI {
 						continue;
 					}
 
-					Config config = new Config(ZUIURLConfig);
+					ZUIConfig config = new ZUIConfig(ZUIURLConfig);
 					if (currentConfigs.Exists(c => c.name == config.name)) {
 						Debug.Log($"[ZUI] Discarding duplicate of the config '{config.name}'. Please make sure that all configs have unique names.");
 						continue;
@@ -49,12 +52,14 @@ namespace ZUI {
 
 				// load config options (whether or not a config is enabled)
 				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
+				ZUIConfigOptions.OrderByDescending(c => int.Parse(c.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)));
 				foreach (ConfigNode ZUIConfigOption in ZUIConfigOptions) {
-					if (!ZUIConfigOption.HasValue(Constants.ZUICONFIGOPTIONENABLED_CFG)) {
-						Debug.Log($"[ZUI] Config option does not have '{Constants.ZUICONFIGOPTIONENABLED_CFG}'. There is nothing to enable.");
+					Debug.Log($"[ZUI] priority: {ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)}");
+					if (!ZUIConfigOption.HasValue(Constants.ZUICONFIGOPTION_ENABLED_CFG)) {
+						Debug.Log($"[ZUI] Config option does not have '{Constants.ZUICONFIGOPTION_ENABLED_CFG}'. There is nothing to enable.");
 						continue;
 					}
-					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTIONENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTION_ENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 					foreach (string configValue in ZUIConfigOptionValues) {
 						if (currentConfigs.Exists(c => c.name == configValue)) {
 							EnableConfig(currentConfigs.Find(c => c.name == configValue));
@@ -65,15 +70,15 @@ namespace ZUI {
 				}
 			}
 		}
-		internal static void EnableConfig(Config config) {
-			if (!enabledConfigs.Contains(config)) {
+		internal static void EnableConfig(ZUIConfig config) {
+			if (!enabledConfigs.Exists(c => c.name == config.name)) {
 				enabledConfigs.Add(config);
 			}
 		}
-		internal static bool DisableConfig(Config config) {
+		internal static bool DisableConfig(ZUIConfig config) {
 			return enabledConfigs.Remove(config);
 		}
-		private static void AddConfig(Config config) {
+		private static void AddConfig(ZUIConfig config) {
 			if (config.HasHUDReplacerNode) {
 				ConfigNode[] ConfigNodes = config.GetConfigNodesAsHUDReplacerNodes();
 				foreach (var configNode in ConfigNodes) {
@@ -88,7 +93,8 @@ namespace ZUI {
 			}
 		}
 		internal static void SetConfigs() {
-			foreach (Config config in enabledConfigs) { 
+			currentConfigNodes.Clear();
+			foreach (ZUIConfig config in enabledConfigs) { 
 				AddConfig(config);
 			}
 			ConfigNode optionsFile = new ConfigNode();
@@ -98,10 +104,25 @@ namespace ZUI {
 			optionsFile.Save(KSPUtil.ApplicationRootPath + OPTIONS_SAVE_LOCATION, "ZUI Options. Any changes to this file may be overwritten by ZUI, use config.cfg instead.");
 			GameDatabase.CompileConfig(optionsFile);
 		}
-		internal static List<Config> GetConfigs() {
+		internal static void SaveConfigOverrides() {
+			ConfigNode overridesFile = new ConfigNode();
+			ConfigNode ZUINode = new ConfigNode(Constants.ZUI_NODE);
+			ConfigNode ZUIConfigOptionsNode = new ConfigNode(Constants.ZUICONFIGOPTIONS_NODE);
+			List<string> enabledConfigs = new List<string>();
+			foreach (ZUIConfig config in ConfigManager.enabledConfigs) {
+				enabledConfigs.Add(config.name);
+			}
+			ZUIConfigOptionsNode.AddValue(Constants.ZUICONFIGOPTION_ENABLED_CFG, string.Join(", ", enabledConfigs));
+			ZUIConfigOptionsNode.AddValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG, overridePriority);
+			ZUINode.AddNode(ZUIConfigOptionsNode);
+			overridesFile.AddNode(ZUINode);
+			overridesFile.Save(KSPUtil.ApplicationRootPath + USER_OVERRIDE_SAVE_LOCATION, "Config overrides set in-game. Delete this file to remove overrides.");
+			GameDatabase.CompileConfig(overridesFile);
+		}
+		internal static List<ZUIConfig> GetConfigs() {
 			return currentConfigs;
 		}
-		internal static List<Config> GetEnabledConfigs() {
+		internal static List<ZUIConfig> GetEnabledConfigs() {
 			return enabledConfigs;
 		}
 	}

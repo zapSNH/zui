@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ZUI
 {
-	public class Config
+	public class ZUIConfig
 	{
 		[Persistent] public string name;
 		public bool HasRecolorNode { 
@@ -27,7 +27,7 @@ namespace ZUI
 
 		public ConfigNode configNode;
 
-		public Config(ConfigNode configNode) {
+		public ZUIConfig(ConfigNode configNode) {
 			this.configNode = configNode;
 			ConfigNode.LoadObjectFromConfig(this, configNode);
 		}

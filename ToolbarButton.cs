@@ -13,13 +13,13 @@ namespace ZUI {
 		public void Awake() {
 			if (!ToolbarButtonEnabled()) return;
 			configTexture = GameDatabase.Instance.GetTexture(CONFIG_TEXTURE_PATH, false);
-			toolbarButton = ApplicationLauncher.Instance.AddModApplication(ConfigUI.ShowPopup, null, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS, configTexture);
+			toolbarButton = ApplicationLauncher.Instance.AddModApplication(ConfigUI.TogglePopup, ConfigUI.TogglePopup, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS, configTexture);
 		}
 		private bool ToolbarButtonEnabled() {
 			bool enabled = false;
 			UrlDir.UrlConfig[] ZUINodes = GameDatabase.Instance.GetConfigs(Constants.ZUI_NODE);
 			foreach (UrlDir.UrlConfig URLConfig in ZUINodes) {
-				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
+				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUISETTINGS_NODE);
 				foreach (ConfigNode ZUIConfigOption in ZUIConfigOptions) {
 					ZUIConfigOption.TryGetValue(Constants.TOOLBAR_BUTTON_ENABLED, ref enabled);
 				}
