@@ -1,5 +1,4 @@
-﻿using CommNet.Network;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -106,8 +105,10 @@ namespace ZUI {
 					HUDReplacer.HUDReplacer.additionalRecolorNodes.Add(configNode);
 				}
 			}
-			HUDReplacer.HUDReplacer.Instance.GetTextures();
-			HUDReplacer.HUDReplacer.Instance.ReplaceTextures();
+			if (HUDReplacer.HUDReplacer.Instance != null) {
+				HUDReplacer.HUDReplacer.Instance.GetTextures();
+				HUDReplacer.HUDReplacer.Instance.ReplaceTextures();
+			}
 		}
 		internal static void SaveConfigOverrides() {
 			ConfigNode overridesFile = new ConfigNode();
