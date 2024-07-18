@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommNet.Network;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,7 +13,6 @@ namespace ZUI {
 		private static List<ZUIConfig> enabledConfigs = new List<ZUIConfig>(); // enabled configs specified in 'ZUIConfigOptions'
 		private static List<ConfigNode> currentConfigNodes = new List<ConfigNode>(); // resulting config nodes from enabledConfigs
 
-		private const string OPTIONS_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/options.cfg"; // output of currentConfigNodes
 		private const string USER_OVERRIDE_SAVE_LOCATION = Constants.MOD_FOLDER + "Config/override.cfg"; // user overrides set in ui
 
 		private static int overridePriority = 16384;
@@ -52,7 +52,7 @@ namespace ZUI {
 
 				// load config options (whether or not a config is enabled)
 				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
-				ZUIConfigOptions.OrderByDescending(c => int.Parse(c.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)));
+				ZUIConfigOptions = ZUIConfigOptions.OrderByDescending(c => int.Parse(c.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG))).ToArray();
 				foreach (ConfigNode ZUIConfigOption in ZUIConfigOptions) {
 					Debug.Log($"[ZUI] priority: {ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)}");
 					if (!ZUIConfigOption.HasValue(Constants.ZUICONFIGOPTION_ENABLED_CFG)) {
@@ -94,15 +94,20 @@ namespace ZUI {
 		}
 		internal static void SetConfigs() {
 			currentConfigNodes.Clear();
+			HUDReplacer.HUDReplacer.additionalConfigNodes.Clear();
+			HUDReplacer.HUDReplacer.additionalRecolorNodes.Clear();
 			foreach (ZUIConfig config in enabledConfigs) { 
 				AddConfig(config);
 			}
-			ConfigNode optionsFile = new ConfigNode();
 			foreach (ConfigNode configNode in currentConfigNodes) {
-				optionsFile.AddNode(configNode);
+				if (configNode.name == Constants.HUDREPLACER_NODE) {
+					HUDReplacer.HUDReplacer.additionalConfigNodes.Add(configNode);
+				} else if (configNode.name == Constants.HUDREPLACER_RECOLOR_NODE) {
+					HUDReplacer.HUDReplacer.additionalRecolorNodes.Add(configNode);
+				}
 			}
-			optionsFile.Save(KSPUtil.ApplicationRootPath + OPTIONS_SAVE_LOCATION, "ZUI Options. Any changes to this file may be overwritten by ZUI, use config.cfg instead.");
-			GameDatabase.CompileConfig(optionsFile);
+			HUDReplacer.HUDReplacer.Instance.GetTextures();
+			HUDReplacer.HUDReplacer.Instance.ReplaceTextures();
 		}
 		internal static void SaveConfigOverrides() {
 			ConfigNode overridesFile = new ConfigNode();
@@ -117,7 +122,6 @@ namespace ZUI {
 			ZUINode.AddNode(ZUIConfigOptionsNode);
 			overridesFile.AddNode(ZUINode);
 			overridesFile.Save(KSPUtil.ApplicationRootPath + USER_OVERRIDE_SAVE_LOCATION, "Config overrides set in-game. Delete this file to remove overrides.");
-			GameDatabase.CompileConfig(overridesFile);
 		}
 		internal static List<ZUIConfig> GetConfigs() {
 			return currentConfigs;

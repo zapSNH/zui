@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using static Targeting;
 
 namespace ZUI {
 	// TODO: l10n
@@ -38,8 +40,9 @@ namespace ZUI {
 			List<DialogGUIBase> dialog = new List<DialogGUIBase>();
 
 			// add zuiconfigs
-			List<DialogGUIToggleButton> buttons = new List<DialogGUIToggleButton>();
+			List<DialogGUIBase> buttons = new List<DialogGUIBase>();
 			List<ZUIConfig> configs = ConfigManager.GetConfigs();
+			buttons.Add(new DialogGUIContentSizer(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize, true));
 			foreach (ZUIConfig config in configs) {
 				DialogGUIToggleButton button = new DialogGUIToggleButton(ConfigManager.GetEnabledConfigs().Contains(config),
 					config.name.CamelCaseToHumanReadable(),
@@ -54,7 +57,13 @@ namespace ZUI {
 			DialogGUIScrollList scrollList = new DialogGUIScrollList(Vector2.one,
 				false,
 				true,
-				new DialogGUIVerticalLayout(windowWidth - (2 * paddingWindow) - (2 * paddingXSmall), 64, paddingXSmall, new RectOffset((int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall), TextAnchor.MiddleLeft, buttons.ToArray()));
+				new DialogGUIVerticalLayout(windowWidth - (2 * paddingWindow) - (2 * paddingXSmall),
+				64,
+				paddingXSmall,
+				new RectOffset((int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall, (int)paddingXSmall),
+				TextAnchor.MiddleLeft,
+				buttons.ToArray()
+				));
 
 			// tab buttons
 			DialogGUIToggleButton configTab = new DialogGUIToggleButton(() => currentTab == ZUITab.Configuration,
@@ -70,14 +79,15 @@ namespace ZUI {
 					SetTab(ZUITab.OtherSettings);
 				},
 				(windowWidth / 2) - (2 * paddingSmall), buttonHeight
-			);
+			); 
 
 			// tab container
 			DialogGUIHorizontalLayout tabContainer = new DialogGUIHorizontalLayout(TextAnchor.MiddleCenter, configTab, otherSettingsTab);
 
-			// ui container 
-			//DialogGUIVerticalLayout UIContainer = new DialogGUIVerticalLayout(windowWidth - (2 * paddingWindow) - (2 * paddingXSmall), windowHeight - (2 * paddingWindow),
-			//	tabContainer, scrollList);
+			// apply button
+			DialogGUIButton applyButton = new DialogGUIButton("Apply",
+				ApplyConfigs,
+				windowWidth - (2 * paddingWindow), buttonHeight, false);
 
 			popupDialog = PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
 				new MultiOptionDialog("ZUI Config Options",
@@ -85,7 +95,7 @@ namespace ZUI {
 					"ZUI Config Options",
 					HighLogic.UISkin,
 					new Rect(0.5f, 0.5f, windowWidth, windowHeight),
-					tabContainer, scrollList),
+					tabContainer, scrollList, applyButton),
 				false, HighLogic.UISkin, false);
 		}
 		private static void ToggleConfig(bool selected, ZUIConfig config) {
@@ -93,12 +103,10 @@ namespace ZUI {
 			if (selected) {
 				ConfigManager.EnableConfig(config);
 			} else {
-				if (ConfigManager.DisableConfig(config)) {
-					Debug.Log("[ZUI] Successfully removed");
-				} else {
-					Debug.Log("[ZUI] Unable to remove!");
-				}
+				ConfigManager.DisableConfig(config);
 			}
+		}
+		private static void ApplyConfigs() {
 			ConfigManager.SaveConfigOverrides();
 			ConfigManager.SetConfigs();
 		}

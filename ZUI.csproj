@@ -18,6 +18,10 @@
       <HintPath>D:\Games\Kerbal Space Program\KSP_x64_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="HUDReplacer">
+      <HintPath>D:\Games\Kerbal Space Program\GameData\HUDReplacer\HUDReplacer.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>D:\Games\Kerbal Space Program\KSP_x64_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
