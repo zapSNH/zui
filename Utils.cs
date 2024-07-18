@@ -21,6 +21,8 @@ namespace ZUI {
 		internal const string ZUICONFIGNAME_VALUE = "name"; // name of ZUIConfig
 		internal const string ZUICONFIGOPTION_ENABLED_CFG = "enabled"; // enabled ZUIConfigs
 		internal const string ZUICONFIGOPTION_PRIORITY_CFG = "priority";
+		internal const string ZUICONFIGOPTION_REQUIRESCENERELOAD_CFG = "requireSceneReload";
+		internal const string ZUICONFIGOPTION_REQUIRERESTART_CFG = "requireRestart";
 
 		internal const string HUDREPLACER_NODE = "HUDReplacer:NEEDS[HUDReplacer]";
 		internal const string HUDREPLACER_RECOLOR_NODE = "HUDReplacerRecolor:NEEDS[HUDReplacer]";

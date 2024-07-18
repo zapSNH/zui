@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using static Targeting;
@@ -104,6 +105,25 @@ namespace ZUI {
 				ConfigManager.EnableConfig(config);
 			} else {
 				ConfigManager.DisableConfig(config);
+			}
+		}
+		private static void ApplyConfigWindow() {
+			if (ConfigManager.GetEnabledConfigs().Exists(c => c.requireSceneReload || c.requireRestart)) {
+				List<ZUIConfig> requireSceneReload = ConfigManager.GetEnabledConfigs().Where(c => c.requireSceneReload).ToList();
+				List<ZUIConfig> requireRestart = ConfigManager.GetEnabledConfigs().Where(c => c.requireRestart).ToList();
+				DialogGUIButton okButton = new DialogGUIButton("OK", ApplyConfigs, windowWidth - (2 * paddingWindow), buttonHeight, true);
+				DialogGUIBox needSceneReloadBox = new DialogGUIBox("need a scene reload to apply: " + string.Join(", ", requireSceneReload), windowWidth - (2 * paddingWindow), 64, () => { return requireSceneReload.Count != 0; }, new DialogGUIContentSizer(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize, true));
+				DialogGUIBox needRestartBox = new DialogGUIBox("need a game restart to apply: " + string.Join(", ", requireRestart), windowWidth - (2 * paddingWindow), 64, () => { return requireRestart.Count != 0; }, new DialogGUIContentSizer(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize, true));
+				PopupDialog applyNotice = PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+					new MultiOptionDialog("ApplyConfigWindow",
+						"The following configs",
+						"Information",
+						HighLogic.UISkin,
+						new Rect(0.5f, 0.5f, windowWidth, windowWidth),
+						needSceneReloadBox, needRestartBox, okButton),
+					false, HighLogic.UISkin, true);
+			} else {
+				ApplyConfigs();
 			}
 		}
 		private static void ApplyConfigs() {

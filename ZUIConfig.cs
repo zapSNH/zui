@@ -6,6 +6,8 @@ namespace ZUI
 	public class ZUIConfig
 	{
 		[Persistent] public string name;
+		[Persistent] public bool requireSceneReload;
+		[Persistent] public bool requireRestart;
 		public bool HasRecolorNode { 
 			get {
 				if (configNode != null) {
