@@ -11,8 +11,6 @@ namespace ZUI {
 		internal static DialogGUIBase configPage;
 		internal static DialogGUIBase settingsPage;
 
-		internal static DialogGUIBox currentPage;
-
 		internal enum ZUITab {
 			Configuration,
 			OtherSettings
@@ -59,6 +57,7 @@ namespace ZUI {
 						ToggleConfig(selected, config);
 					},
 					windowWidth - (2 * paddingWindow) - (2 * paddingXSmall), buttonHeight);
+				button.tooltipText = "HAHAHAHAHAHHAHAA";
 				buttons.Add(button);
 			}
 
@@ -77,11 +76,15 @@ namespace ZUI {
 				ApplyConfigWindow,
 				windowWidth - (2 * paddingRegular), buttonHeight, false);
 
-			configPage = new DialogGUIVerticalLayout(true, false, 0, new RectOffset(), TextAnchor.UpperCenter, scrollList, applyButton);
+			configPage = new DialogGUIVerticalLayout(true, false, paddingSmall, new RectOffset(), TextAnchor.UpperCenter, scrollList, applyButton);
 
 			// Other Settings Page
-			
-			settingsPage = new DialogGUIVerticalLayout(true, false, 0, new RectOffset(), TextAnchor.UpperCenter, applyButton);
+			DialogGUIToggle adaptiveNavballToggle = new DialogGUIToggle(() => ConfigManager.enableAdaptiveNavball, "Enable Adaptive Navball", 
+				delegate (bool selected) {
+					ToggleAdaptiveNavball(selected);
+				});
+
+			settingsPage = new DialogGUIVerticalLayout(true, false, paddingSmall, new RectOffset((int)paddingRegular, (int)paddingRegular, (int)paddingRegular, (int)paddingRegular), TextAnchor.UpperCenter, adaptiveNavballToggle);
 
 			// tab buttons
 			DialogGUIToggleButton configTab = new DialogGUIToggleButton(() => currentTab == ZUITab.Configuration,
@@ -104,20 +107,11 @@ namespace ZUI {
 
 			DialogGUIBox configPageBox = new DialogGUIBox(null, -1, -1, () => currentTab == ZUITab.Configuration, configPage);
 			DialogGUIBox settingsPageBox = new DialogGUIBox(null, -1, -1, () => currentTab == ZUITab.OtherSettings, settingsPage);
-			/*switch (currentTab) {
-				case ZUITab.Configuration:
-					currentPage.children.Add(configPage);
-					break;
-				case ZUITab.OtherSettings:
-				default:
-					currentPage.children.Add(settingsPage);
-					break;
-			}*/
 
 			popupDialog = PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
 				new MultiOptionDialog("ZUIConfigWindow",
 					"",
-					"ZUI Config Optionss",
+					"ZUI Config Options",
 					HighLogic.UISkin,
 					new Rect(0.5f, 0.5f, windowWidth, windowHeight),
 					new DialogGUIBase[] { tabContainer, configPageBox, settingsPageBox } ),
@@ -131,6 +125,17 @@ namespace ZUI {
 			} else {
 				ConfigManager.DisableConfig(config);
 			}
+		}
+		private static void ToggleAdaptiveNavball(bool active) {
+			ConfigManager.enableAdaptiveNavball = active;
+			if (AdaptiveNavball.Instance != null) {
+				if (active) {
+					AdaptiveNavball.Instance.EnableAdaptiveNavball();
+				} else {
+					AdaptiveNavball.Instance.DisableAdaptiveNavball();
+				}
+			}
+			ConfigManager.SaveConfigOverrides();
 		}
 		private static void ApplyConfigWindow() {
 			if (changedConfigs.Exists(c => c.requireSceneReload || c.requireRestart)) {
@@ -156,12 +161,13 @@ namespace ZUI {
 				applyNotice = PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
 					new MultiOptionDialog("ApplyConfigWindow",
 						"The following configs...",
-						"Information",
+						null,
 						HighLogic.UISkin,
 						new Rect(0.5f, 0.5f, windowWidth, -1),
 						new DialogGUIContentSizer(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize, true),
 						dialog),
 					false, HighLogic.UISkin, true);
+				applyNotice.SetDraggable(false);
 			} else {
 				ApplyConfigs();
 			}
@@ -171,36 +177,13 @@ namespace ZUI {
 				applyNotice.Dismiss();
 				applyNotice = null;
 			}
-			PopupDialog reloadDialog = PopupDialog.SpawnPopupDialog(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-				new MultiOptionDialog("ReloadWindow",
-					"Please wait...",
-					"Loading configs",
-					HighLogic.UISkin,
-					new Rect(0.5f, 0.5f, windowWidth, -1),
-					new DialogGUIContentSizer(ContentSizeFitter.FitMode.Unconstrained, ContentSizeFitter.FitMode.PreferredSize, true)),
-				false, HighLogic.UISkin, true);
 			ConfigManager.SaveConfigOverrides();
 			ConfigManager.SetConfigs();
-			reloadDialog.Dismiss();
 		}
 		private static void SetTab(ZUITab tab) {
 			if (tab == currentTab) return;
 			currentTab = tab;
 			Debug.Log($"[ZUI] current tab: {tab}");
-			/*currentPage.children[0].uiItem.gameObject.DestroyGameObjectImmediate();
-			currentPage.children.Clear();
-			switch (currentTab) {
-				case ZUITab.Configuration:
-					currentPage.children.Add(configPage);
-					break;
-				case ZUITab.OtherSettings:
-				default:
-					currentPage.children.Add(settingsPage);
-					break;
-			}
-			Stack<Transform> stack = new Stack<Transform>();
-			stack.Push(currentPage.uiItem.gameObject.transform);
-			currentPage.children[0].Create(ref stack, HighLogic.UISkin);*/
 		}
 	}
 }

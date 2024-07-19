@@ -16,6 +16,8 @@ namespace ZUI {
 
 		private static int overridePriority = 16384;
 
+		internal static bool enableAdaptiveNavball = true;
+
 		public void Awake() {
 			if (Instance == null || Instance == this) {
 				Instance = this;
@@ -30,8 +32,8 @@ namespace ZUI {
 		}
 		private void LoadConfigs() {
 			UrlDir.UrlConfig[] ZUINodes = GameDatabase.Instance.GetConfigs(Constants.ZUI_NODE);
+			List<ConfigNode> configOptions = new List<ConfigNode>();
 			foreach (UrlDir.UrlConfig URLConfig in ZUINodes) {
-
 				// load all configs
 				Debug.Log($"[ZUI] Loading configs from {URLConfig.url}");
 				ConfigNode[] ZUIConfigs = URLConfig.config.GetNodes(Constants.ZUICONFIG_NODE);
@@ -48,23 +50,31 @@ namespace ZUI {
 					}
 					currentConfigs.Add(config);
 				}
+				ConfigNode[] configNodes = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
+				if (configNodes.Count() != 0) configOptions.AddRange(configNodes);
+			}
 
-				// load config options (whether or not a config is enabled)
-				ConfigNode[] ZUIConfigOptions = URLConfig.config.GetNodes(Constants.ZUICONFIGOPTIONS_NODE);
-				ZUIConfigOptions = ZUIConfigOptions.OrderByDescending(c => int.Parse(c.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG))).ToArray();
-				foreach (ConfigNode ZUIConfigOption in ZUIConfigOptions) {
-					Debug.Log($"[ZUI] priority: {ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)}");
-					if (!ZUIConfigOption.HasValue(Constants.ZUICONFIGOPTION_ENABLED_CFG)) {
-						Debug.Log($"[ZUI] Config option does not have '{Constants.ZUICONFIGOPTION_ENABLED_CFG}'. There is nothing to enable.");
-						continue;
-					}
-					string[] ZUIConfigOptionValues = ZUIConfigOption.GetValue(Constants.ZUICONFIGOPTION_ENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-					foreach (string configValue in ZUIConfigOptionValues) {
-						if (currentConfigs.Exists(c => c.name == configValue)) {
-							EnableConfig(currentConfigs.Find(c => c.name == configValue));
-						} else {
-							Debug.Log($"[ZUI] '{configValue}' does not exist.");
-						}
+			bool alreadyHasOptionsNode = false;
+			configOptions = configOptions.OrderByDescending(c => int.Parse(c.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG))).ToList();
+			// load config options (whether or not a config is enabled)
+			// this is a separate loop so that all the configs are loaded before we apply the options
+			foreach (ConfigNode configOption in configOptions) {
+				if (alreadyHasOptionsNode) break;
+				alreadyHasOptionsNode = true;
+				Debug.Log($"[ZUI] priority: {configOption.GetValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG)}");
+				if (!configOption.HasValue(Constants.ZUICONFIGOPTION_ENABLED_CFG)) {
+					Debug.Log($"[ZUI] Config option does not have '{Constants.ZUICONFIGOPTION_ENABLED_CFG}'. There is nothing to enable.");
+					continue;
+				}
+				if (configOption.HasValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG)) {
+					enableAdaptiveNavball = bool.Parse(configOption.GetValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG));
+				}
+				string[] ZUIConfigOptionValues = configOption.GetValue(Constants.ZUICONFIGOPTION_ENABLED_CFG).Replace(" ", "").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+				foreach (string configValue in ZUIConfigOptionValues) {
+					if (currentConfigs.Exists(c => c.name == configValue)) {
+						EnableConfig(currentConfigs.Find(c => c.name == configValue));
+					} else {
+						Debug.Log($"[ZUI] '{configValue}' does not exist.");
 					}
 				}
 			}
@@ -120,6 +130,7 @@ namespace ZUI {
 			}
 			ZUIConfigOptionsNode.AddValue(Constants.ZUICONFIGOPTION_ENABLED_CFG, string.Join(", ", enabledConfigs));
 			ZUIConfigOptionsNode.AddValue(Constants.ZUICONFIGOPTION_PRIORITY_CFG, overridePriority);
+			ZUIConfigOptionsNode.AddValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG, enableAdaptiveNavball);
 			ZUINode.AddNode(ZUIConfigOptionsNode);
 			overridesFile.AddNode(ZUINode);
 			overridesFile.Save(KSPUtil.ApplicationRootPath + USER_OVERRIDE_SAVE_LOCATION, "Config overrides set in-game. Delete this file to remove overrides.");

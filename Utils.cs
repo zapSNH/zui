@@ -37,7 +37,7 @@ namespace ZUI {
 		internal const string ROTATE_CFG = "rotate";
 		//internal const string SCALE_CFG = "scale";
 
-		internal const string ADAPTIVE_NAVBALL_ENABLED_CFG = "enabled";
+		internal const string ADAPTIVE_NAVBALL_ENABLED_CFG = "adaptiveNavballEnabled";
 		internal const string NAVBALL_SURFACE = "navballSurface";
 		internal const string NAVBALL_ORBIT = "navballOrbit";
 		internal const string NAVBALL_TARGET = "navballTarget";

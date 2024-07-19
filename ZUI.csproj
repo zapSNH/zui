@@ -52,6 +52,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="GameData\999_ZUI\Config\" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="copy $(OutputPath)\*.dll GameData\999_ZUI\" />
   </Target>

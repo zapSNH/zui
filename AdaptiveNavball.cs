@@ -9,12 +9,20 @@ namespace ZUI {
 		private string[] navballPaths = new string[] { null, null, null };
 		private bool[] navballExists = new bool[3];
 		private Texture2D navballTexture;
-		private bool enableAdaptiveNavball = true;
+		private string originalNavballTextureLocation = Constants.MOD_FOLDER + "PluginData/navball_original.png";
+
+		private bool adaptiveBehaviorEnabled = false;
 
 		public void Start() {
-			Instance = this;
+			if (Instance == null || Instance == this) {
+				Instance = this;
+				DontDestroyOnLoad(gameObject);
+			} else {
+				Destroy(gameObject);
+				return;
+			}
 			LoadConfigs();
-			if (!enableAdaptiveNavball) return;
+			adaptiveBehaviorEnabled = true;
 			foreach (Texture2D tex in (Texture2D[])(object)Resources.FindObjectsOfTypeAll(typeof(Texture2D))) {
 				if (tex.name == Constants.NAVBALL_TEXTURE) {
 					navballTexture = tex;
@@ -22,8 +30,8 @@ namespace ZUI {
 					break;
 				}
 			}
-
 			Debug.Log("[ZUI] NavBall Texture Paths: Surface: " + (navballPaths[0] ?? "None") + " | Orbit: " + (navballPaths[1] ?? "None") + " | Target:" + (navballPaths[2] ?? "None"));
+			if (!ConfigManager.enableAdaptiveNavball) return;
 			ChangeNavball(new FlightGlobals.SpeedDisplayModes());
 			GameEvents.onSetSpeedMode.Add(ChangeNavball);
 		}
@@ -44,9 +52,6 @@ namespace ZUI {
 					if (config.HasValue(Constants.NAVBALL_TARGET)) {
 						navballPaths[2] = config.GetValue(Constants.NAVBALL_TARGET);
 						navballExists[2] = true;
-					}
-					if (config.HasValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG)) {
-						config.TryGetValue(Constants.ADAPTIVE_NAVBALL_ENABLED_CFG, ref enableAdaptiveNavball);
 					}
 				}
 			}
@@ -74,7 +79,20 @@ namespace ZUI {
 		}
 
 		public void OnDisable() {
-			GameEvents.onSetSpeedMode.Remove(ChangeNavball);
+			DisableAdaptiveNavball();
+		}
+
+		public void DisableAdaptiveNavball() {
+			if (!adaptiveBehaviorEnabled) return;
+			adaptiveBehaviorEnabled = false;
+			try { GameEvents.onSetSpeedMode.Remove(ChangeNavball); } catch { Debug.Log("[ZUI] Unable to unsubscribe to 'ChangeNavball'"); }
+			ImageConversion.LoadImage(navballTexture, File.ReadAllBytes(KSPUtil.ApplicationRootPath + originalNavballTextureLocation));
+		}
+		public void EnableAdaptiveNavball() {
+			if (adaptiveBehaviorEnabled) return;
+			adaptiveBehaviorEnabled = true;
+			ChangeNavball(new FlightGlobals.SpeedDisplayModes());
+			GameEvents.onSetSpeedMode.Add(ChangeNavball);
 		}
 	}
 }
