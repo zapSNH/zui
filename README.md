@@ -1,1 +1,1 @@
-now part of ZTheme as of v1.2.0
+Moved to the [ZTheme repo](https://github.com/zapSNH/ZTheme).
